@@ -1,0 +1,72 @@
+[
+  {
+    "profile": {
+      "customerId": "demo-customer",
+      "displayName": "Maya",
+      "budget": { "min": 2000, "max": 7000, "currency": "INR" },
+      "sizes": { "top": "M", "dress": "M", "bottom": "30", "shoes": "38" }
+    },
+    "memories": [
+      {
+        "id": "mem-demo-001",
+        "customerId": "demo-customer",
+        "attribute": "material",
+        "value": "linen",
+        "sentiment": "positive",
+        "confidence": 0.95,
+        "source": "profile",
+        "occurredAt": "2026-06-12T10:30:00Z",
+        "evidence": "Customer explicitly selected linen as a preferred fabric.",
+        "productId": null
+      },
+      {
+        "id": "mem-demo-002",
+        "customerId": "demo-customer",
+        "attribute": "material",
+        "value": "polyester",
+        "sentiment": "negative",
+        "confidence": 0.98,
+        "source": "return",
+        "occurredAt": "2026-07-02T14:15:00Z",
+        "evidence": "Returned a polyester dress because the fabric felt uncomfortable in warm weather.",
+        "productId": "rm-dress-005"
+      },
+      {
+        "id": "mem-demo-003",
+        "customerId": "demo-customer",
+        "attribute": "color",
+        "value": "blue",
+        "sentiment": "positive",
+        "confidence": 0.78,
+        "source": "event",
+        "occurredAt": "2026-06-28T09:45:00Z",
+        "evidence": "Wishlisted three blue products across two visits.",
+        "productId": null
+      },
+      {
+        "id": "mem-demo-004",
+        "customerId": "demo-customer",
+        "attribute": "style",
+        "value": "relaxed",
+        "sentiment": "positive",
+        "confidence": 0.84,
+        "source": "event",
+        "occurredAt": "2026-06-28T09:47:00Z",
+        "evidence": "Frequently clicked relaxed-fit products and skipped fitted alternatives.",
+        "productId": null
+      },
+      {
+        "id": "mem-demo-005",
+        "customerId": "demo-customer",
+        "attribute": "occasion",
+        "value": "beach",
+        "sentiment": "positive",
+        "confidence": 0.72,
+        "source": "conversation",
+        "occurredAt": "2026-07-10T16:20:00Z",
+        "evidence": "Mentioned an upcoming beach holiday in a previous conversation.",
+        "productId": null
+      }
+    ]
+  }
+]

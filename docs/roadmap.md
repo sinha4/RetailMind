@@ -12,6 +12,10 @@
 - Rank three products with structured reasons.
 - Render results in the web experience through one configurable brand voice.
 
+Implemented through the API: catalog, seeded/Qdrant-ready customer memory, structured intent,
+deterministic ranking, inventory validation, explanations, and configurable presentation. The web
+experience is the remaining Phase 2 task.
+
 ## Phase 3 — Learning loop
 
 - Capture clicks, skips, wishlist events, purchases, returns, and return reasons.
@@ -33,4 +37,3 @@
 ## Recommended demo story
 
 A returning shopper asks for a beach-holiday outfit. RetailMind remembers that they returned synthetic fabric, respects their usual budget, explains three in-stock choices, and speaks in the selected retailer voice. A return event updates memory, and the next session visibly changes the ranking.
-

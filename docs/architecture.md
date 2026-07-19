@@ -31,12 +31,15 @@ flowchart LR
 
 ## Initial API surface
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/health` | Liveness and service identity |
-| GET | `/ready` | Dependency readiness (expanded later) |
-| POST | `/v1/conversations/messages` | Future orchestrated shopping turn |
-| POST | `/v1/events` | Future customer signal ingestion |
+| Method | Path                                  | Purpose                                |
+| ------ | ------------------------------------- | -------------------------------------- |
+| GET    | `/health`                             | Liveness and service identity          |
+| GET    | `/ready`                              | Dependency readiness (expanded later)  |
+| GET    | `/v1/products`                        | List and filter catalog products       |
+| GET    | `/v1/products/{product_id}`           | Retrieve authoritative product details |
+| GET    | `/v1/customers/{customer_id}/context` | Retrieve profile and memory facts      |
+| POST   | `/v1/conversations/messages`          | Future orchestrated shopping turn      |
+| POST   | `/v1/events`                          | Future customer signal ingestion       |
 
 ## Key implementation decisions
 
@@ -45,4 +48,3 @@ flowchart LR
 3. Require recommendation agents to return structured product IDs, scores, and reasons before brand rewriting.
 4. Keep catalog truth, inventory, prices, and policies outside the language model.
 5. Add tracing at the orchestrator boundary so every recommendation is explainable during the demo.
-

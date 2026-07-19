@@ -48,6 +48,24 @@ docs/         Architecture and delivery notes
 
 4. Open the web app at `http://localhost:3000` and API docs at `http://localhost:8000/docs`.
 
+The seeded catalog is available at `http://localhost:8000/v1/products`. It supports optional
+`category`, `material`, `occasion`, `maxPrice`, `size`, and `inStock` query parameters.
+
+The demo shopper context is available at
+`http://localhost:8000/v1/customers/demo-customer/context`. Development defaults to seeded
+memory; set `MEMORY_BACKEND=qdrant` after installing `apps/api[agents]` to persist the same
+explicit memory facts in Qdrant.
+
+Send a grounded shopping turn to `POST http://localhost:8000/v1/conversations/messages`:
+
+```json
+{
+  "customerId": "demo-customer",
+  "message": "Find me a beach holiday outfit under ₹5,000",
+  "brandVoice": "warm"
+}
+```
+
 ## Useful commands
 
 ```bash
@@ -57,4 +75,3 @@ npm run format      # Check formatting
 ```
 
 See [docs/architecture.md](docs/architecture.md) for the system boundaries and [docs/roadmap.md](docs/roadmap.md) for the suggested build order.
-

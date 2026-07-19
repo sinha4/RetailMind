@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str | None = None
     qdrant_collection: str = "customer_memory"
+    memory_backend: str = "seeded"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -18,4 +19,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
