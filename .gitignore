@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.next/
+.turbo/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Environment and local data
+.env
+.env.local
+!.env.example
+qdrant_storage/
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+
+# Build and test output
+dist/
+build/
+coverage/
+*.log
+

@@ -1,0 +1,25 @@
+{
+  "name": "retailmind",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:web",
+    "dev:web": "npm run dev --workspace @retailmind/web",
+    "build": "npm run build --workspace @retailmind/web",
+    "check": "npm run typecheck --workspace @retailmind/web && npm run lint --workspace @retailmind/web",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "test:api": "python -m pytest apps/api/tests"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
+
