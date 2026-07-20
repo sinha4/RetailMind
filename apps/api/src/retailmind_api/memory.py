@@ -58,7 +58,14 @@ class QdrantMemoryRepository:
 
         self._models = models
         self._collection = settings.qdrant_collection
-        self._client = QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key)
+        if settings.qdrant_url.startswith("local:"):
+            local_path = settings.qdrant_url.removeprefix("local:") or "qdrant_storage"
+            self._client = QdrantClient(path=local_path)
+        else:
+            self._client = QdrantClient(
+                url=settings.qdrant_url,
+                api_key=settings.qdrant_api_key,
+            )
         if not self._client.collection_exists(self._collection):
             self._client.create_collection(
                 collection_name=self._collection,
@@ -94,7 +101,7 @@ class QdrantMemoryRepository:
             points=[
                 self._models.PointStruct(
                     id=str(uuid5(NAMESPACE_URL, fact.id)),
-                    vector=[0.0],
+                    vector=[1.0],
                     payload=fact.model_dump(mode="json", by_alias=True),
                 )
             ],

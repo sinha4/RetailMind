@@ -111,6 +111,10 @@ export interface ProductRecommendation {
 export interface AgentTraceStep {
   agent: string;
   summary: string;
+  mode: "ai" | "deterministic" | "data";
+  provider: string | null;
+  latencyMs: number | null;
+  promptVersion: string | null;
 }
 
 export interface ConversationMessageResponse {

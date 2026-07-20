@@ -1,6 +1,39 @@
 import { ShoppingExperience } from "@/components/shopping-experience";
+import type { CustomerContext } from "@/lib/retailmind-types";
 
-export default function Home() {
+const apiUrl =
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:8000";
+
+async function getLearnedPreferences() {
+  try {
+    const response = await fetch(
+      `${apiUrl}/v1/customers/demo-customer/context`,
+      {
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) return [];
+    const context = (await response.json()) as CustomerContext;
+    return [
+      ...new Set(
+        context.memories
+          .filter(
+            (fact) =>
+              fact.attribute === "material" && fact.sentiment === "negative",
+          )
+          .map((fact) => `Avoid ${fact.value}`),
+      ),
+    ];
+  } catch {
+    return [];
+  }
+}
+
+export default async function Home() {
+  const learnedPreferences = await getLearnedPreferences();
+
   return (
     <main className="min-h-screen">
       <header className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
@@ -24,7 +57,7 @@ export default function Home() {
         </div>
       </header>
 
-      <ShoppingExperience />
+      <ShoppingExperience initialLearnedPreferences={learnedPreferences} />
     </main>
   );
 }

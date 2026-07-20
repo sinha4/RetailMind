@@ -83,7 +83,7 @@ class ConversationMessageRequest(BaseModel):
 
     customer_id: str = Field(alias="customerId")
     message: str = Field(min_length=1, max_length=1000)
-    brand_voice: Literal["warm", "minimal"] = Field(default="warm", alias="brandVoice")
+    brand_voice: Literal["warm", "minimal", "bold"] = Field(default="warm", alias="brandVoice")
 
 
 class RecommendationReason(BaseModel):
@@ -100,6 +100,19 @@ class ProductRecommendation(BaseModel):
 class AgentTraceStep(BaseModel):
     agent: str
     summary: str
+    mode: Literal["ai", "deterministic", "data"]
+    provider: str | None = None
+    latency_ms: int | None = Field(default=None, alias="latencyMs")
+    prompt_version: str | None = Field(default=None, alias="promptVersion")
+
+
+class EscalationDecision(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    required: bool
+    reason: str
+    confidence: float = Field(ge=0, le=1)
+    context_summary: str = Field(alias="contextSummary")
 
 
 class ConversationMessageResponse(BaseModel):
@@ -110,6 +123,7 @@ class ConversationMessageResponse(BaseModel):
     intent: ShoppingIntent
     recommendations: list[ProductRecommendation]
     trace: list[AgentTraceStep]
+    escalation: EscalationDecision | None = None
 
 
 class CustomerSignalRequest(BaseModel):
@@ -135,3 +149,30 @@ class CustomerSignal(BaseModel):
 class SignalIngestionResponse(BaseModel):
     signal: CustomerSignal
     derived_memories: list[MemoryFact] = Field(alias="derivedMemories")
+    agent_message: str | None = Field(default=None, alias="agentMessage")
+    trace: list[AgentTraceStep] = Field(default_factory=list)
+
+
+class DeliveryDelayRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    customer_id: str = Field(alias="customerId")
+    order_id: str = Field(alias="orderId", min_length=1)
+    product_id: str = Field(alias="productId")
+    delay_days: int = Field(alias="delayDays", ge=1, le=30)
+    brand_voice: Literal["warm", "minimal", "bold"] = Field(default="warm", alias="brandVoice")
+
+
+class DeliveryDelayResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    message: str
+    revised_delivery: str = Field(alias="revisedDelivery")
+    escalation: EscalationDecision
+    trace: list[AgentTraceStep]
+
+
+class BrandProfile(BaseModel):
+    id: Literal["warm", "minimal", "bold"]
+    name: str
+    description: str

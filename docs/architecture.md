@@ -41,6 +41,8 @@ flowchart LR
 | POST   | `/v1/conversations/messages`          | Run an orchestrated shopping turn       |
 | POST   | `/v1/events`                          | Ingest and learn from customer signals  |
 | GET    | `/v1/customers/{customer_id}/events`  | Retrieve the customer event audit trail |
+| GET    | `/v1/brands`                          | List brand-manager voice profiles       |
+| POST   | `/v1/orders/delivery-delay`           | Run delay communication and escalation  |
 
 ## Key implementation decisions
 

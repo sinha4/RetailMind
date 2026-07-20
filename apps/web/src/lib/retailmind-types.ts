@@ -38,6 +38,10 @@ export interface ProductRecommendation {
 export interface AgentTraceStep {
   agent: string;
   summary: string;
+  mode: "ai" | "deterministic" | "data";
+  provider: string | null;
+  latencyMs: number | null;
+  promptVersion: string | null;
 }
 
 export interface ConversationMessageResponse {
@@ -46,6 +50,14 @@ export interface ConversationMessageResponse {
   intent: ShoppingIntent;
   recommendations: ProductRecommendation[];
   trace: AgentTraceStep[];
+  escalation: EscalationDecision;
+}
+
+export interface EscalationDecision {
+  required: boolean;
+  reason: string;
+  confidence: number;
+  contextSummary: string;
 }
 
 export type SignalKind =
@@ -63,4 +75,41 @@ export interface CustomerSignal {
   kind: SignalKind;
   occurredAt: string;
   reason?: string;
+}
+
+export interface MemoryFact {
+  id: string;
+  customerId: string;
+  attribute: string;
+  value: string;
+  sentiment: "positive" | "negative" | "neutral";
+  confidence: number;
+  source: "profile" | "conversation" | "event" | "return";
+  occurredAt: string;
+  evidence: string;
+  productId: string | null;
+}
+
+export interface SignalIngestionResponse {
+  signal: CustomerSignal;
+  derivedMemories: MemoryFact[];
+  agentMessage: string | null;
+  trace: AgentTraceStep[];
+}
+
+export interface DeliveryDelayResponse {
+  message: string;
+  revisedDelivery: string;
+  escalation: EscalationDecision;
+  trace: AgentTraceStep[];
+}
+
+export interface CustomerContext {
+  profile: {
+    customerId: string;
+    displayName: string;
+    budget: { min: number; max: number; currency: "INR" };
+    sizes: Record<string, string>;
+  };
+  memories: MemoryFact[];
 }

@@ -81,6 +81,37 @@ a {
   color: var(--muted);
 }
 
+.card-action {
+  border: 1px solid rgb(29 42 35 / 10%);
+  border-radius: 999px;
+  padding: 0.5rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--muted);
+  transition: 150ms ease;
+}
+
+.card-action:hover {
+  border-color: rgb(61 106 84 / 45%);
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.card-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.card-action:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.card-action-emphasis {
+  background: var(--ink);
+  color: white;
+}
+
 @keyframes reveal {
   from {
     opacity: 0;

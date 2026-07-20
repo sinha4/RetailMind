@@ -35,7 +35,7 @@ docs/         Architecture and delivery notes
    ```bash
    npm install
    python3.12 -m venv .venv
-   .venv/bin/pip install -e 'apps/api[dev]'
+   .venv/bin/pip install -e 'apps/api[dev,agents]'
    ```
 
 3. Start Qdrant and the applications (in separate terminals):
@@ -53,8 +53,8 @@ The seeded catalog is available at `http://localhost:8000/v1/products`. It suppo
 
 The demo shopper context is available at
 `http://localhost:8000/v1/customers/demo-customer/context`. Development defaults to seeded
-memory; set `MEMORY_BACKEND=qdrant` after installing `apps/api[agents]` to persist the same
-explicit memory facts in Qdrant.
+memory during tests. The application defaults to embedded Qdrant persistence in the ignored
+`qdrant_storage/` directory. Set `QDRANT_URL` to an HTTP URL when using hosted or Docker Qdrant.
 
 Send a grounded shopping turn to `POST http://localhost:8000/v1/conversations/messages`:
 
@@ -65,6 +65,13 @@ Send a grounded shopping turn to `POST http://localhost:8000/v1/conversations/me
   "brandVoice": "warm"
 }
 ```
+
+## Optional Gemini agents
+
+Set `GEMINI_API_KEY` in `.env` to enable Gemini 3.5 Flash for structured intent extraction and
+brand-voice presentation. Without a key—or when a request times out or fails validation—the API
+uses deterministic fallbacks. Product selection, ranking, price, inventory, and memory remain
+outside the language model in both modes.
 
 ## Useful commands
 

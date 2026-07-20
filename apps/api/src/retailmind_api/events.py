@@ -2,9 +2,11 @@ from datetime import UTC, datetime
 from functools import lru_cache
 from uuid import uuid4
 
+from retailmind_api.agents import retention_message
 from retailmind_api.catalog import get_catalog
 from retailmind_api.memory import CustomerNotFoundError, get_memory_repository, get_seed_contexts
 from retailmind_api.models import (
+    AgentTraceStep,
     CustomerSignal,
     CustomerSignalRequest,
     MemoryFact,
@@ -100,4 +102,20 @@ def ingest_signal(request: CustomerSignalRequest) -> SignalIngestionResponse:
     for memory in memories:
         repository.upsert_fact(memory)
 
-    return SignalIngestionResponse(signal=signal, derivedMemories=memories)
+    agent_message = (
+        retention_message(request.customer_id, product.name) if signal.kind == "purchase" else None
+    )
+    trace = (
+        [
+            AgentTraceStep(
+                agent="post-purchase",
+                summary="Acknowledged the purchase and prepared retention context.",
+                mode="deterministic",
+            )
+        ]
+        if signal.kind == "purchase"
+        else []
+    )
+    return SignalIngestionResponse(
+        signal=signal, derivedMemories=memories, agentMessage=agent_message, trace=trace
+    )

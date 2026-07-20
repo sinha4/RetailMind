@@ -2,7 +2,10 @@ import re
 from dataclasses import dataclass
 from uuid import uuid4
 
+from retailmind_api.agents import evaluate_escalation
+from retailmind_api.ai import GeminiAdapter, ModelAdapter, ModelOutput, parse_json_output
 from retailmind_api.catalog import get_catalog
+from retailmind_api.config import get_settings
 from retailmind_api.memory import get_customer_context
 from retailmind_api.models import (
     AgentTraceStep,
@@ -42,6 +45,8 @@ SIZE_CATEGORY = {
     "swimwear": "dress",
     "shoes": "shoes",
 }
+INTENT_PROMPT_VERSION = "intent-v1"
+BRAND_PROMPT_VERSION = "brand-v1"
 
 
 def extract_intent(message: str) -> ShoppingIntent:
@@ -195,8 +200,7 @@ def recommend(
 def _present(recommendations: list[ProductRecommendation], name: str, voice: str) -> str:
     if not recommendations:
         return (
-            f"I couldn't find a suitable in-stock match, {name}. "
-            "Try widening the budget or style."
+            f"I couldn't find a suitable in-stock match, {name}. Try widening the budget or style."
         )
     if voice == "minimal":
         return f"{len(recommendations)} matches, selected for fit, preferences, and availability."
@@ -206,35 +210,122 @@ def _present(recommendations: list[ProductRecommendation], name: str, voice: str
     )
 
 
-def handle_shopping_turn(request: ConversationMessageRequest) -> ConversationMessageResponse:
+async def _ai_intent(message: str, adapter: ModelAdapter) -> tuple[ShoppingIntent, ModelOutput]:
+    schema = {
+        "type": "object",
+        "properties": {
+            "occasion": {"type": ["string", "null"]},
+            "categories": {"type": "array", "items": {"type": "string"}},
+            "materials": {"type": "array", "items": {"type": "string"}},
+            "colors": {"type": "array", "items": {"type": "string"}},
+            "maxPrice": {"type": ["integer", "null"]},
+            "size": {"type": ["string", "null"]},
+        },
+        "required": ["occasion", "categories", "materials", "colors", "maxPrice", "size"],
+    }
+    prompt = (
+        "Extract retail shopping constraints from the user request. Normalize categories to "
+        "dress, top, bottom, set, outerwear, swimwear, shoes, or accessory. Use INR for budget. "
+        "Do not invent constraints.\n\nUser request: " + message
+    )
+    output = await adapter.generate(prompt, response_schema=schema)
+    return ShoppingIntent.model_validate(parse_json_output(output)), output
+
+
+async def _ai_brand_message(
+    fallback: str, name: str, voice: str, adapter: ModelAdapter
+) -> tuple[str, ModelOutput]:
+    prompt = (
+        f"Write one short {voice} retailer greeting for {name}. It introduces a curated product "
+        "selection. Do not mention product facts, prices, stock, materials, sizes, quantities, or "
+        "policies. Do not add markdown. Keep it under 180 characters.\n\n"
+        f"Meaning to preserve: {fallback}"
+    )
+    output = await adapter.generate(prompt)
+    message = output.text.strip().strip('"')
+    if not message or len(message) > 180 or any(character.isdigit() for character in message):
+        raise ValueError("Brand output failed safety validation")
+    return message, output
+
+
+async def handle_shopping_turn(
+    request: ConversationMessageRequest, adapter: ModelAdapter | None = None
+) -> ConversationMessageResponse:
+    settings = get_settings()
+    configured_adapter = adapter
+    if configured_adapter is None and (settings.gemini_api_key or settings.google_api_key):
+        configured_adapter = GeminiAdapter(settings)
+
+    intent_output: ModelOutput | None = None
     intent = extract_intent(request.message)
+    if configured_adapter:
+        try:
+            intent, intent_output = await _ai_intent(request.message, configured_adapter)
+        except Exception:
+            intent = extract_intent(request.message)
+
     context = get_customer_context(request.customer_id)
     recommendations = recommend(intent, context)
+    fallback_message = _present(recommendations, context.profile.display_name, request.brand_voice)
+    brand_message = fallback_message
+    brand_output: ModelOutput | None = None
+    if configured_adapter:
+        try:
+            brand_message, brand_output = await _ai_brand_message(
+                fallback_message,
+                context.profile.display_name,
+                request.brand_voice,
+                configured_adapter,
+            )
+        except Exception:
+            brand_message = fallback_message
+
+    escalation = evaluate_escalation(request.customer_id, recommendations)
 
     return ConversationMessageResponse(
         conversationId=str(uuid4()),
-        assistantMessage=_present(
-            recommendations, context.profile.display_name, request.brand_voice
-        ),
+        assistantMessage=brand_message,
         intent=intent,
         recommendations=recommendations,
+        escalation=escalation,
         trace=[
-            AgentTraceStep(agent="intent", summary="Converted the request into typed constraints."),
+            AgentTraceStep(
+                agent="intent",
+                summary="Converted the request into typed constraints.",
+                mode="ai" if intent_output else "deterministic",
+                provider=intent_output.provider if intent_output else None,
+                latencyMs=intent_output.latency_ms if intent_output else None,
+                promptVersion=INTENT_PROMPT_VERSION if intent_output else None,
+            ),
             AgentTraceStep(
                 agent="customer-intelligence",
                 summary=f"Retrieved {len(context.memories)} attributable memory facts.",
+                mode="data",
+                provider="qdrant" if settings.memory_backend == "qdrant" else "seeded-memory",
             ),
             AgentTraceStep(
                 agent="personalization",
                 summary=f"Ranked {len(get_catalog())} catalog products against intent and memory.",
+                mode="deterministic",
             ),
             AgentTraceStep(
                 agent="inventory",
                 summary="Removed unavailable sizes and preserved catalog prices.",
+                mode="data",
+                provider="catalog",
             ),
             AgentTraceStep(
                 agent="brand-voice",
                 summary=f"Presented results in the {request.brand_voice} voice.",
+                mode="ai" if brand_output else "deterministic",
+                provider=brand_output.provider if brand_output else None,
+                latencyMs=brand_output.latency_ms if brand_output else None,
+                promptVersion=BRAND_PROMPT_VERSION if brand_output else None,
+            ),
+            AgentTraceStep(
+                agent="human-escalation",
+                summary=escalation.reason,
+                mode="deterministic",
             ),
         ],
     )

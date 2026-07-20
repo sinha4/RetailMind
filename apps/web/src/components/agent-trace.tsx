@@ -10,6 +10,8 @@ const agentLabels: Record<string, string> = {
   personalization: "Ranked the collection",
   inventory: "Checked live availability",
   "brand-voice": "Prepared your edit",
+  "post-purchase": "Managed the order journey",
+  "human-escalation": "Checked whether a person should help",
 };
 
 export function AgentTrace({ trace }: AgentTraceProps) {
@@ -24,7 +26,7 @@ export function AgentTrace({ trace }: AgentTraceProps) {
           +
         </span>
       </summary>
-      <ol className="mt-5 grid gap-4 border-t border-black/8 pt-5 md:grid-cols-5">
+      <ol className="mt-5 grid gap-4 border-t border-black/8 pt-5 md:grid-cols-3 xl:grid-cols-6">
         {trace.map((step, index) => (
           <li className="relative" key={step.agent}>
             <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--accent)]">
@@ -35,6 +37,11 @@ export function AgentTrace({ trace }: AgentTraceProps) {
             </p>
             <p className="mt-1 text-[11px] leading-4 text-[var(--muted)]">
               {step.summary}
+            </p>
+            <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--accent)]">
+              {step.mode}
+              {step.provider ? ` · ${step.provider}` : ""}
+              {step.latencyMs ? ` · ${step.latencyMs}ms` : ""}
             </p>
           </li>
         ))}

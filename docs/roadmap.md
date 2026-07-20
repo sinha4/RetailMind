@@ -22,9 +22,8 @@ experience is the remaining Phase 2 task.
 - Convert events into positive/negative memory facts.
 - Demonstrate a later recommendation changing because of a previous return.
 
-In progress: event ingestion, event audit history, and explicit memory derivation are implemented.
-The customer experience currently exposes wishlist and skip signals; purchase and return flows can
-use the same API.
+Implemented: event ingestion, audit history, explicit memory derivation, wishlist/skip/purchase/
+return controls, return reasons, persistent Qdrant memory, and visible before/after reranking.
 
 ## Phase 4 — Orchestration depth
 
@@ -32,11 +31,19 @@ use the same API.
 - Add post-purchase status and proactive delay communication.
 - Add confidence-based human escalation with a context summary.
 
+Implemented: inventory validation and alternatives, post-purchase purchase acknowledgement,
+proactive delivery-delay communication, confidence-based human escalation with a context summary,
+the provider-neutral Gemini boundary, structured intent, safe brand voice, deterministic fallbacks,
+prompt versioning, provider metadata, and latency traces.
+
 ## Phase 5 — Demo polish
 
 - Brand manager controls and two visibly different brand personalities.
 - Agent trace/explanation panel.
 - Seeded before/after customer journey and measurable demo metrics.
+
+Implemented: three selectable brand personalities, agent trace/explanation panels, and an agent
+operations demo for delivery-delay and escalation behavior. Seeded demo metrics remain future work.
 
 ## Recommended demo story
 

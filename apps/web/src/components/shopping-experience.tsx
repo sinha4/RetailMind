@@ -3,8 +3,13 @@
 import { FormEvent, useState } from "react";
 
 import { AgentTrace } from "@/components/agent-trace";
+import { AgentOperations } from "@/components/agent-operations";
 import { RecommendationCard } from "@/components/recommendation-card";
-import type { ConversationMessageResponse } from "@/lib/retailmind-types";
+import type {
+  ConversationMessageResponse,
+  SignalIngestionResponse,
+  SignalKind,
+} from "@/lib/retailmind-types";
 
 const suggestions = [
   "Beach holiday under ₹5,000",
@@ -19,16 +24,45 @@ const rememberedPreferences = [
   "Avoid polyester",
 ];
 
-export function ShoppingExperience() {
+interface ShoppingExperienceProps {
+  initialLearnedPreferences: string[];
+}
+
+export function ShoppingExperience({
+  initialLearnedPreferences,
+}: ShoppingExperienceProps) {
   const [message, setMessage] = useState(
     "Find me a beach holiday outfit under ₹5,000",
   );
-  const [voice, setVoice] = useState<"warm" | "minimal">("warm");
+  const [voice, setVoice] = useState<"warm" | "minimal" | "bold">("warm");
   const [result, setResult] = useState<ConversationMessageResponse | null>(
     null,
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [learnedPreferences, setLearnedPreferences] = useState<string[]>(
+    initialLearnedPreferences,
+  );
+  const [learningNotice, setLearningNotice] = useState<{
+    title: string;
+    detail: string;
+  } | null>(null);
+
+  async function getRecommendations() {
+    const response = await fetch("/api/recommendations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerId: "demo-customer",
+        message: message.trim(),
+        brandVoice: voice,
+      }),
+    });
+
+    if (!response.ok)
+      throw new Error("RetailMind could not complete that request.");
+    return (await response.json()) as ConversationMessageResponse;
+  }
 
   async function submitRequest(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -37,21 +71,10 @@ export function ShoppingExperience() {
 
     setIsLoading(true);
     setError(null);
+    setLearningNotice(null);
 
     try {
-      const response = await fetch("/api/recommendations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerId: "demo-customer",
-          message: trimmedMessage,
-          brandVoice: voice,
-        }),
-      });
-
-      if (!response.ok)
-        throw new Error("RetailMind could not complete that request.");
-      setResult((await response.json()) as ConversationMessageResponse);
+      setResult(await getRecommendations());
     } catch {
       setError(
         "We couldn't reach the recommendation service. Make sure the API is running.",
@@ -63,6 +86,61 @@ export function ShoppingExperience() {
 
   function selectSuggestion(suggestion: string) {
     setMessage(suggestion);
+  }
+
+  async function handleLearning(
+    kind: SignalKind,
+    productId: string,
+    productName: string,
+    update: SignalIngestionResponse,
+  ) {
+    const newAvoidances = update.derivedMemories
+      .filter(
+        (fact) =>
+          fact.attribute === "material" && fact.sentiment === "negative",
+      )
+      .map((fact) => `Avoid ${fact.value}`);
+    if (newAvoidances.length) {
+      setLearnedPreferences((current) => [
+        ...new Set([...current, ...newAvoidances]),
+      ]);
+    }
+
+    if (kind !== "return" || !result) {
+      setLearningNotice({
+        title: kind === "purchase" ? "Post-purchase agent" : "Memory updated",
+        detail:
+          update.agentMessage ??
+          `${productName} will influence future recommendations.`,
+      });
+      return;
+    }
+
+    const previousPosition = result.recommendations.findIndex(
+      (item) => item.product.id === productId,
+    );
+    setIsLoading(true);
+    try {
+      const updated = await getRecommendations();
+      const nextPosition = updated.recommendations.findIndex(
+        (item) => item.product.id === productId,
+      );
+      const material = newAvoidances[0]?.replace("Avoid ", "");
+      setResult(updated);
+      setLearningNotice({
+        title: "Ranking changed from your return",
+        detail:
+          nextPosition === -1
+            ? `${productName} was removed from position #${previousPosition + 1}${material ? ` after learning to avoid ${material}` : ""}.`
+            : `${productName} moved from #${previousPosition + 1} to #${nextPosition + 1}.`,
+      });
+    } catch {
+      setError(
+        "Your return was remembered, but the refreshed recommendations could not load.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -84,7 +162,9 @@ export function ShoppingExperience() {
               the pieces that didn&apos;t work before.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              {rememberedPreferences.map((preference) => (
+              {[
+                ...new Set([...rememberedPreferences, ...learnedPreferences]),
+              ].map((preference) => (
                 <span className="preference-pill" key={preference}>
                   <span className="size-1.5 rounded-full bg-[var(--accent)]" />
                   {preference}
@@ -143,12 +223,15 @@ export function ShoppingExperience() {
                 <select
                   className="rounded-full border border-black/10 bg-white px-3 py-1.5 font-semibold text-[var(--ink)] outline-none focus:border-[var(--accent)]"
                   onChange={(event) =>
-                    setVoice(event.target.value as "warm" | "minimal")
+                    setVoice(
+                      event.target.value as "warm" | "minimal" | "bold",
+                    )
                   }
                   value={voice}
                 >
                   <option value="warm">Warm</option>
                   <option value="minimal">Minimal</option>
+                  <option value="bold">Bold</option>
                 </select>
               </label>
             </div>
@@ -156,6 +239,16 @@ export function ShoppingExperience() {
         </div>
 
         <div aria-live="polite">
+          {learningNotice ? (
+            <div className="mt-4 rounded-2xl border border-[var(--accent)]/15 bg-[var(--soft)] px-5 py-4">
+              <p className="text-sm font-semibold text-[var(--accent)]">
+                {learningNotice.title}
+              </p>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {learningNotice.detail}
+              </p>
+            </div>
+          ) : null}
           {error ? (
             <p className="mt-4 rounded-2xl border border-red-900/10 bg-red-50 px-5 py-4 text-sm text-red-900">
               {error}
@@ -197,6 +290,7 @@ export function ShoppingExperience() {
                   {result.recommendations.map((recommendation, index) => (
                     <RecommendationCard
                       key={recommendation.product.id}
+                      onLearning={handleLearning}
                       position={index + 1}
                       recommendation={recommendation}
                     />
@@ -232,6 +326,7 @@ export function ShoppingExperience() {
           )}
         </div>
       </section>
+      <AgentOperations voice={voice} />
     </>
   );
 }

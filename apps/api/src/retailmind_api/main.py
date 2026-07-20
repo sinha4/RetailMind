@@ -1,16 +1,20 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+from retailmind_api.agents import BRAND_PROFILES, handle_delivery_delay
 from retailmind_api.catalog import filter_catalog, get_catalog
 from retailmind_api.config import get_settings
 from retailmind_api.events import ProductNotFoundError, ingest_signal, list_customer_events
 from retailmind_api.memory import CustomerNotFoundError, get_customer_context
 from retailmind_api.models import (
+    BrandProfile,
     ConversationMessageRequest,
     ConversationMessageResponse,
     CustomerContext,
     CustomerSignal,
     CustomerSignalRequest,
+    DeliveryDelayRequest,
+    DeliveryDelayResponse,
     Product,
     ProductList,
     SignalIngestionResponse,
@@ -94,7 +98,7 @@ async def conversation_message(
     request: ConversationMessageRequest,
 ) -> ConversationMessageResponse:
     try:
-        return handle_shopping_turn(request)
+        return await handle_shopping_turn(request)
     except CustomerNotFoundError as error:
         raise HTTPException(status_code=404, detail="Customer not found") from error
 
@@ -119,3 +123,22 @@ async def customer_events(customer_id: str) -> list[CustomerSignal]:
         return list_customer_events(customer_id)
     except CustomerNotFoundError as error:
         raise HTTPException(status_code=404, detail="Customer not found") from error
+
+
+@app.get("/v1/brands", response_model=list[BrandProfile], tags=["brand-manager"])
+async def brand_profiles() -> list[BrandProfile]:
+    return BRAND_PROFILES
+
+
+@app.post(
+    "/v1/orders/delivery-delay",
+    response_model=DeliveryDelayResponse,
+    tags=["post-purchase"],
+)
+async def delivery_delay(request: DeliveryDelayRequest) -> DeliveryDelayResponse:
+    try:
+        return handle_delivery_delay(request)
+    except CustomerNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Customer not found") from error
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail="Product not found") from error
