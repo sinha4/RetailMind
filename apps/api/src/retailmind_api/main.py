@@ -1,11 +1,25 @@
-from fastapi import FastAPI, HTTPException, Query
+import json
+import logging
+from time import perf_counter
+from uuid import uuid4
+
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from retailmind_api.agents import BRAND_PROFILES, handle_delivery_delay
 from retailmind_api.catalog import filter_catalog, get_catalog
 from retailmind_api.config import get_settings
-from retailmind_api.events import ProductNotFoundError, ingest_signal, list_customer_events
-from retailmind_api.memory import CustomerNotFoundError, get_customer_context
+from retailmind_api.events import (
+    ProductNotFoundError,
+    ingest_signal,
+    list_customer_events,
+    reset_customer_events,
+)
+from retailmind_api.memory import (
+    CustomerNotFoundError,
+    get_customer_context,
+    reset_customer_memory,
+)
 from retailmind_api.models import (
     BrandProfile,
     ConversationMessageRequest,
@@ -22,6 +36,8 @@ from retailmind_api.models import (
 from retailmind_api.recommendations import handle_shopping_turn
 
 settings = get_settings()
+logger = logging.getLogger("retailmind.api")
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 app = FastAPI(
     title="RetailMind API",
@@ -36,6 +52,36 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def request_observability(request: Request, call_next):
+    """Emit safe structured request telemetry without customer payloads or secrets."""
+    request_id = request.headers.get("x-request-id", str(uuid4()))
+    started = perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception(
+            json.dumps(
+                {"event": "request_failed", "requestId": request_id, "path": request.url.path}
+            )
+        )
+        raise
+    response.headers["x-request-id"] = request_id
+    logger.info(
+        json.dumps(
+            {
+                "event": "request_completed",
+                "requestId": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "latencyMs": round((perf_counter() - started) * 1000),
+            }
+        )
+    )
+    return response
 
 
 @app.get("/health", tags=["system"])
@@ -142,3 +188,13 @@ async def delivery_delay(request: DeliveryDelayRequest) -> DeliveryDelayResponse
         raise HTTPException(status_code=404, detail="Customer not found") from error
     except LookupError as error:
         raise HTTPException(status_code=404, detail="Product not found") from error
+
+
+@app.post("/v1/demo/reset", tags=["demo"])
+async def reset_demo(customer_id: str = Query(alias="customerId")) -> dict[str, int | str]:
+    try:
+        memories = reset_customer_memory(customer_id)
+        reset_customer_events(customer_id)
+    except CustomerNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Customer not found") from error
+    return {"status": "reset", "customerId": customer_id, "memoryCount": len(memories)}

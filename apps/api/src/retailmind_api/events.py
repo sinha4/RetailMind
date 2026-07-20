@@ -30,6 +30,12 @@ def list_customer_events(customer_id: str) -> list[CustomerSignal]:
     return list(get_event_store().get(customer_id, []))
 
 
+def reset_customer_events(customer_id: str) -> None:
+    if customer_id not in get_seed_contexts():
+        raise CustomerNotFoundError(customer_id)
+    get_event_store().pop(customer_id, None)
+
+
 def _product_fact(
     signal: CustomerSignal, sentiment: str, confidence: float, evidence: str
 ) -> MemoryFact:

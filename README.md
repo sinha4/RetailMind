@@ -81,4 +81,8 @@ npm run test:api    # Run API tests (after Python setup)
 npm run format      # Check formatting
 ```
 
+Every push and pull request runs frontend lint/type-check/build, API tests, and Python lint through
+GitHub Actions. See [docs/testing.md](docs/testing.md) for the complete test matrix and demo journey,
+and [docs/operations.md](docs/operations.md) for request and agent observability.
+
 See [docs/architecture.md](docs/architecture.md) for the system boundaries and [docs/roadmap.md](docs/roadmap.md) for the suggested build order.

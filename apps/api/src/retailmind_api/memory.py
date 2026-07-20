@@ -19,6 +19,8 @@ class MemoryRepository(Protocol):
 
     def upsert_fact(self, fact: MemoryFact) -> None: ...
 
+    def reset_customer(self, customer_id: str) -> list[MemoryFact]: ...
+
 
 @lru_cache
 def get_seed_contexts() -> dict[str, CustomerContext]:
@@ -43,6 +45,13 @@ class SeededMemoryRepository:
         facts = self._facts.setdefault(fact.customer_id, [])
         facts[:] = [existing for existing in facts if existing.id != fact.id]
         facts.append(fact)
+
+    def reset_customer(self, customer_id: str) -> list[MemoryFact]:
+        context = get_seed_contexts().get(customer_id)
+        if context is None:
+            raise CustomerNotFoundError(customer_id)
+        self._facts[customer_id] = list(context.memories)
+        return self.list_facts(customer_id)
 
 
 class QdrantMemoryRepository:
@@ -107,6 +116,28 @@ class QdrantMemoryRepository:
             ],
         )
 
+    def reset_customer(self, customer_id: str) -> list[MemoryFact]:
+        context = get_seed_contexts().get(customer_id)
+        if context is None:
+            raise CustomerNotFoundError(customer_id)
+        self._client.delete(
+            collection_name=self._collection,
+            points_selector=self._models.FilterSelector(
+                filter=self._models.Filter(
+                    must=[
+                        self._models.FieldCondition(
+                            key="customerId",
+                            match=self._models.MatchValue(value=customer_id),
+                        )
+                    ]
+                )
+            ),
+            wait=True,
+        )
+        for fact in context.memories:
+            self.upsert_fact(fact)
+        return self.list_facts(customer_id)
+
 
 @lru_cache
 def get_memory_repository() -> MemoryRepository:
@@ -132,3 +163,8 @@ def get_customer_profile(customer_id: str) -> CustomerProfile:
     if context is None:
         raise CustomerNotFoundError(customer_id)
     return context.profile
+
+
+def reset_customer_memory(customer_id: str) -> list[MemoryFact]:
+    """Restore one demo customer's memory to the versioned seed facts."""
+    return get_memory_repository().reset_customer(customer_id)

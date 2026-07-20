@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { AgentTrace } from "@/components/agent-trace";
 import { AgentOperations } from "@/components/agent-operations";
 import { RecommendationCard } from "@/components/recommendation-card";
+import { RecommendationComparison } from "@/components/recommendation-comparison";
 import type {
   ConversationMessageResponse,
   SignalIngestionResponse,
@@ -47,6 +48,12 @@ export function ShoppingExperience({
     title: string;
     detail: string;
   } | null>(null);
+  const [comparison, setComparison] = useState<{
+    before: ConversationMessageResponse["recommendations"];
+    after: ConversationMessageResponse["recommendations"];
+    returnedName: string;
+  } | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
 
   async function getRecommendations() {
     const response = await fetch("/api/recommendations", {
@@ -88,6 +95,26 @@ export function ShoppingExperience({
     setMessage(suggestion);
   }
 
+  async function resetDemo() {
+    setIsResetting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/demo-reset", { method: "POST" });
+      if (!response.ok) throw new Error("Reset failed");
+      setResult(null);
+      setComparison(null);
+      setLearningNotice({
+        title: "Demo reset",
+        detail: "Maya’s original memory and event history have been restored.",
+      });
+      setLearnedPreferences(initialLearnedPreferences);
+    } catch {
+      setError("The demo could not be reset. Make sure the API is running.");
+    } finally {
+      setIsResetting(false);
+    }
+  }
+
   async function handleLearning(
     kind: SignalKind,
     productId: string,
@@ -127,6 +154,11 @@ export function ShoppingExperience({
       );
       const material = newAvoidances[0]?.replace("Avoid ", "");
       setResult(updated);
+      setComparison({
+        before: result.recommendations,
+        after: updated.recommendations,
+        returnedName: productName,
+      });
       setLearningNotice({
         title: "Ranking changed from your return",
         detail:
@@ -218,7 +250,16 @@ export function ShoppingExperience({
                   </button>
                 ))}
               </div>
-              <label className="flex shrink-0 items-center gap-2 text-xs text-[var(--muted)]">
+              <div className="flex shrink-0 items-center gap-3">
+              <button
+                className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)] disabled:opacity-50"
+                disabled={isResetting || isLoading}
+                onClick={resetDemo}
+                type="button"
+              >
+                {isResetting ? "Resetting…" : "Reset demo"}
+              </button>
+              <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
                 Voice
                 <select
                   className="rounded-full border border-black/10 bg-white px-3 py-1.5 font-semibold text-[var(--ink)] outline-none focus:border-[var(--accent)]"
@@ -234,6 +275,7 @@ export function ShoppingExperience({
                   <option value="bold">Bold</option>
                 </select>
               </label>
+              </div>
             </div>
           </form>
         </div>
@@ -308,6 +350,20 @@ export function ShoppingExperience({
               <div className="mt-8">
                 <AgentTrace trace={result.trace} />
               </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  ["Products considered", "30"],
+                  ["Memory facts used", result.trace.find((step) => step.agent === "customer-intelligence")?.summary.match(/\d+/)?.[0] ?? "0"],
+                  ["Top confidence", `${Math.round(result.escalation.confidence * 100)}%`],
+                  ["Agents executed", String(result.trace.length)],
+                ].map(([label, value]) => (
+                  <div className="rounded-2xl bg-white/70 p-4" key={label}>
+                    <p className="text-2xl font-semibold">{value}</p>
+                    <p className="mt-1 text-xs text-[var(--muted)]">{label}</p>
+                  </div>
+                ))}
+              </div>
+              {comparison ? <RecommendationComparison {...comparison} /> : null}
             </div>
           ) : (
             <div className="grid min-h-52 place-items-center text-center">

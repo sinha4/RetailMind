@@ -91,6 +91,11 @@ class FakeGeminiAdapter:
         return ModelOutput(text=text, latency_ms=42, provider="fake-gemini", model="test")
 
 
+class FailingGeminiAdapter:
+    async def generate(self, prompt: str, *, response_schema: dict | None = None) -> ModelOutput:
+        raise TimeoutError("provider unavailable")
+
+
 def test_ai_intent_and_brand_output_are_validated_and_traced() -> None:
     response = asyncio.run(
         handle_shopping_turn(
@@ -109,6 +114,40 @@ def test_ai_intent_and_brand_output_are_validated_and_traced() -> None:
     assert response.trace[0].provider == "fake-gemini"
     assert response.trace[0].latency_ms == 42
     assert response.trace[-2].mode == "ai"
+
+
+def test_ai_failure_is_visible_and_uses_deterministic_fallback() -> None:
+    response = asyncio.run(
+        handle_shopping_turn(
+            ConversationMessageRequest(
+                customerId="demo-customer",
+                message="A blue linen beach dress under 5000",
+            ),
+            adapter=FailingGeminiAdapter(),
+        )
+    )
+
+    assert response.recommendations
+    assert response.trace[0].provider == "fallback"
+    assert "TimeoutError" in response.trace[0].summary
+    assert response.trace[-2].provider == "fallback"
+
+
+def test_demo_reset_restores_seed_memory_and_clears_events() -> None:
+    client.post(
+        "/v1/events",
+        json={
+            "customerId": "demo-customer",
+            "productId": "rm-dress-001",
+            "kind": "wishlist",
+        },
+    )
+
+    response = client.post("/v1/demo/reset?customerId=demo-customer")
+
+    assert response.status_code == 200
+    assert response.json()["memoryCount"] == 5
+    assert client.get("/v1/customers/demo-customer/events").json() == []
 
 
 def test_purchase_runs_post_purchase_agent() -> None:

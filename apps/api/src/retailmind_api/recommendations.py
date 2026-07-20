@@ -257,11 +257,13 @@ async def handle_shopping_turn(
         configured_adapter = GeminiAdapter(settings)
 
     intent_output: ModelOutput | None = None
+    intent_error: str | None = None
     intent = extract_intent(request.message)
     if configured_adapter:
         try:
             intent, intent_output = await _ai_intent(request.message, configured_adapter)
-        except Exception:
+        except Exception as error:
+            intent_error = type(error).__name__
             intent = extract_intent(request.message)
 
     context = get_customer_context(request.customer_id)
@@ -269,6 +271,7 @@ async def handle_shopping_turn(
     fallback_message = _present(recommendations, context.profile.display_name, request.brand_voice)
     brand_message = fallback_message
     brand_output: ModelOutput | None = None
+    brand_error: str | None = None
     if configured_adapter:
         try:
             brand_message, brand_output = await _ai_brand_message(
@@ -277,7 +280,8 @@ async def handle_shopping_turn(
                 request.brand_voice,
                 configured_adapter,
             )
-        except Exception:
+        except Exception as error:
+            brand_error = type(error).__name__
             brand_message = fallback_message
 
     escalation = evaluate_escalation(request.customer_id, recommendations)
@@ -291,9 +295,15 @@ async def handle_shopping_turn(
         trace=[
             AgentTraceStep(
                 agent="intent",
-                summary="Converted the request into typed constraints.",
+                summary=(
+                    "Converted the request into typed constraints."
+                    if not intent_error
+                    else f"AI unavailable ({intent_error}); used validated intent fallback."
+                ),
                 mode="ai" if intent_output else "deterministic",
-                provider=intent_output.provider if intent_output else None,
+                provider=intent_output.provider
+                if intent_output
+                else ("fallback" if intent_error else None),
                 latencyMs=intent_output.latency_ms if intent_output else None,
                 promptVersion=INTENT_PROMPT_VERSION if intent_output else None,
             ),
@@ -316,9 +326,15 @@ async def handle_shopping_turn(
             ),
             AgentTraceStep(
                 agent="brand-voice",
-                summary=f"Presented results in the {request.brand_voice} voice.",
+                summary=(
+                    f"Presented results in the {request.brand_voice} voice."
+                    if not brand_error
+                    else f"AI unavailable ({brand_error}); used safe brand fallback."
+                ),
                 mode="ai" if brand_output else "deterministic",
-                provider=brand_output.provider if brand_output else None,
+                provider=brand_output.provider
+                if brand_output
+                else ("fallback" if brand_error else None),
                 latencyMs=brand_output.latency_ms if brand_output else None,
                 promptVersion=BRAND_PROMPT_VERSION if brand_output else None,
             ),
