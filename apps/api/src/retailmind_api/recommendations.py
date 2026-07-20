@@ -112,6 +112,14 @@ def _score_product(
     if any(_contains(product.materials, fact.value) for fact in negative_materials):
         return None
 
+    product_memories = [
+        fact
+        for fact in context.memories
+        if fact.attribute == "product" and fact.value == product.id
+    ]
+    if any(fact.sentiment == "negative" and fact.confidence >= 0.9 for fact in product_memories):
+        return None
+
     profile_size_key = SIZE_CATEGORY.get(product.category)
     preferred_size = intent.size or (
         context.profile.sizes.get(profile_size_key) if profile_size_key else None
@@ -151,6 +159,13 @@ def _score_product(
 
     score += min(10, product.total_stock)
     evidence.append(f"Available now with {product.total_stock} units across sizes.")
+    for fact in product_memories:
+        if fact.sentiment == "positive":
+            score += round(15 * fact.confidence)
+            evidence.append("You previously saved or purchased this piece.")
+        elif fact.sentiment == "negative":
+            score -= round(20 * fact.confidence)
+            evidence.append("Deprioritized because you previously skipped this piece.")
     return ScoredProduct(product=product, score=min(score, 100), evidence=evidence)
 
 

@@ -7,11 +7,24 @@ export type SignalKind =
   | "return";
 
 export interface CustomerSignal {
+  id: string;
   customerId: string;
   productId: string;
   kind: SignalKind;
   occurredAt: string;
   reason?: string;
+}
+
+export interface CustomerSignalRequest {
+  customerId: string;
+  productId: string;
+  kind: SignalKind;
+  reason?: string;
+}
+
+export interface SignalIngestionResponse {
+  signal: CustomerSignal;
+  derivedMemories: MemoryFact[];
 }
 
 export interface RecommendationReason {

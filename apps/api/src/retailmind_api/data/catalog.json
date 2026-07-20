@@ -12,7 +12,7 @@
     "materials": ["linen"],
     "styleTags": ["relaxed", "minimal", "coastal"],
     "occasions": ["beach", "holiday", "brunch"],
-    "imageUrl": null,
+    "imageUrl": "/products/Blue_Azure_linen.png",
     "productUrl": "/products/rm-dress-001",
     "inventory": { "XS": 2, "S": 5, "M": 6, "L": 3, "XL": 1 }
   },
@@ -29,7 +29,7 @@
     "materials": ["cotton"],
     "styleTags": ["feminine", "bright", "relaxed"],
     "occasions": ["beach", "holiday", "brunch"],
-    "imageUrl": null,
+    "imageUrl": "/products/orange_sunset.png",
     "productUrl": "/products/rm-dress-002",
     "inventory": { "XS": 3, "S": 7, "M": 4, "L": 2 }
   },
@@ -46,7 +46,7 @@
     "materials": ["viscose"],
     "styleTags": ["printed", "resort", "flowy"],
     "occasions": ["beach", "holiday", "dinner"],
-    "imageUrl": null,
+    "imageUrl": "/products/beachy-floral.png",
     "productUrl": "/products/rm-dress-003",
     "inventory": { "S": 2, "M": 5, "L": 3, "XL": 2 }
   },
@@ -63,7 +63,7 @@
     "materials": ["cotton"],
     "styleTags": ["romantic", "textured", "summer"],
     "occasions": ["holiday", "brunch", "casual"],
-    "imageUrl": null,
+    "imageUrl": "/products/ivory-romantic.png",
     "productUrl": "/products/rm-dress-004",
     "inventory": { "XS": 1, "S": 4, "M": 4, "L": 1 }
   },
@@ -80,7 +80,7 @@
     "materials": ["polyester"],
     "styleTags": ["sleek", "evening", "minimal"],
     "occasions": ["dinner", "party", "holiday"],
-    "imageUrl": null,
+    "imageUrl": "/products/slick-blue.png",
     "productUrl": "/products/rm-dress-005",
     "inventory": { "XS": 2, "S": 2, "M": 5, "L": 3, "XL": 1 }
   },
@@ -97,7 +97,7 @@
     "materials": ["linen"],
     "styleTags": ["relaxed", "classic", "coastal"],
     "occasions": ["beach", "holiday", "casual"],
-    "imageUrl": null,
+    "imageUrl": "/products/white-linen-camp-shirt.png",
     "productUrl": "/products/rm-top-001",
     "inventory": { "S": 6, "M": 8, "L": 5, "XL": 2 }
   },
@@ -114,7 +114,7 @@
     "materials": ["cotton"],
     "styleTags": ["feminine", "casual", "cropped"],
     "occasions": ["beach", "brunch", "casual"],
-    "imageUrl": null,
+    "imageUrl": "/products/tie-top.png",
     "productUrl": "/products/rm-top-002",
     "inventory": { "XS": 3, "S": 4, "M": 6, "L": 2 }
   },
@@ -131,7 +131,7 @@
     "materials": ["cotton"],
     "styleTags": ["artisan", "relaxed", "textured"],
     "occasions": ["holiday", "casual", "travel"],
-    "imageUrl": null,
+    "imageUrl": "/products/blue-tunic.png",
     "productUrl": "/products/rm-top-003",
     "inventory": { "S": 2, "M": 5, "L": 4, "XL": 2 }
   },
@@ -148,7 +148,7 @@
     "materials": ["cotton", "elastane"],
     "styleTags": ["minimal", "fitted", "essential"],
     "occasions": ["beach", "casual", "travel"],
-    "imageUrl": null,
+    "imageUrl": "/products/ribbed-tank.png",
     "productUrl": "/products/rm-top-004",
     "inventory": { "XS": 5, "S": 8, "M": 9, "L": 5, "XL": 3 }
   },
@@ -165,7 +165,7 @@
     "materials": ["cotton"],
     "styleTags": ["crochet", "resort", "textured"],
     "occasions": ["beach", "holiday"],
-    "imageUrl": null,
+    "imageUrl": "/products/overshirt-crochet.png",
     "productUrl": "/products/rm-top-005",
     "inventory": { "S": 3, "M": 4, "L": 2 }
   },
@@ -182,7 +182,7 @@
     "materials": ["polyester"],
     "styleTags": ["printed", "bold", "flowy"],
     "occasions": ["holiday", "dinner", "party"],
-    "imageUrl": null,
+    "imageUrl": "/products/floral-men.png",
     "productUrl": "/products/rm-top-006",
     "inventory": { "XS": 1, "S": 3, "M": 4, "L": 2 }
   },
@@ -199,7 +199,7 @@
     "materials": ["linen"],
     "styleTags": ["relaxed", "tailored", "coastal"],
     "occasions": ["beach", "holiday", "brunch"],
-    "imageUrl": null,
+    "imageUrl": "/products/natural-linen-wide-leg-trousers.png",
     "productUrl": "/products/rm-bottom-001",
     "inventory": { "26": 2, "28": 5, "30": 7, "32": 4, "34": 2 }
   },
@@ -352,7 +352,7 @@
     "materials": ["linen"],
     "styleTags": ["layering", "relaxed", "minimal"],
     "occasions": ["beach", "holiday", "travel"],
-    "imageUrl": null,
+    "imageUrl": "/products/ecru-linen-overshirt.png",
     "productUrl": "/products/rm-outerwear-001",
     "inventory": { "S": 3, "M": 5, "L": 4, "XL": 2 }
   },

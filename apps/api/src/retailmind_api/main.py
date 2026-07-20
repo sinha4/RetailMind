@@ -3,13 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from retailmind_api.catalog import filter_catalog, get_catalog
 from retailmind_api.config import get_settings
+from retailmind_api.events import ProductNotFoundError, ingest_signal, list_customer_events
 from retailmind_api.memory import CustomerNotFoundError, get_customer_context
 from retailmind_api.models import (
     ConversationMessageRequest,
     ConversationMessageResponse,
     CustomerContext,
+    CustomerSignal,
+    CustomerSignalRequest,
     Product,
     ProductList,
+    SignalIngestionResponse,
 )
 from retailmind_api.recommendations import handle_shopping_turn
 
@@ -91,5 +95,27 @@ async def conversation_message(
 ) -> ConversationMessageResponse:
     try:
         return handle_shopping_turn(request)
+    except CustomerNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Customer not found") from error
+
+
+@app.post("/v1/events", response_model=SignalIngestionResponse, tags=["events"])
+async def create_event(request: CustomerSignalRequest) -> SignalIngestionResponse:
+    try:
+        return ingest_signal(request)
+    except CustomerNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Customer not found") from error
+    except ProductNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Product not found") from error
+
+
+@app.get(
+    "/v1/customers/{customer_id}/events",
+    response_model=list[CustomerSignal],
+    tags=["events"],
+)
+async def customer_events(customer_id: str) -> list[CustomerSignal]:
+    try:
+        return list_customer_events(customer_id)
     except CustomerNotFoundError as error:
         raise HTTPException(status_code=404, detail="Customer not found") from error

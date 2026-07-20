@@ -31,15 +31,16 @@ flowchart LR
 
 ## Initial API surface
 
-| Method | Path                                  | Purpose                                |
-| ------ | ------------------------------------- | -------------------------------------- |
-| GET    | `/health`                             | Liveness and service identity          |
-| GET    | `/ready`                              | Dependency readiness (expanded later)  |
-| GET    | `/v1/products`                        | List and filter catalog products       |
-| GET    | `/v1/products/{product_id}`           | Retrieve authoritative product details |
-| GET    | `/v1/customers/{customer_id}/context` | Retrieve profile and memory facts      |
-| POST   | `/v1/conversations/messages`          | Future orchestrated shopping turn      |
-| POST   | `/v1/events`                          | Future customer signal ingestion       |
+| Method | Path                                  | Purpose                                 |
+| ------ | ------------------------------------- | --------------------------------------- |
+| GET    | `/health`                             | Liveness and service identity           |
+| GET    | `/ready`                              | Dependency readiness (expanded later)   |
+| GET    | `/v1/products`                        | List and filter catalog products        |
+| GET    | `/v1/products/{product_id}`           | Retrieve authoritative product details  |
+| GET    | `/v1/customers/{customer_id}/context` | Retrieve profile and memory facts       |
+| POST   | `/v1/conversations/messages`          | Run an orchestrated shopping turn       |
+| POST   | `/v1/events`                          | Ingest and learn from customer signals  |
+| GET    | `/v1/customers/{customer_id}/events`  | Retrieve the customer event audit trail |
 
 ## Key implementation decisions
 

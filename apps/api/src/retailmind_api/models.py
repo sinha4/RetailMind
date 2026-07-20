@@ -110,3 +110,28 @@ class ConversationMessageResponse(BaseModel):
     intent: ShoppingIntent
     recommendations: list[ProductRecommendation]
     trace: list[AgentTraceStep]
+
+
+class CustomerSignalRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    customer_id: str = Field(alias="customerId")
+    product_id: str = Field(alias="productId")
+    kind: Literal["view", "click", "skip", "wishlist", "purchase", "return"]
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class CustomerSignal(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    customer_id: str = Field(alias="customerId")
+    product_id: str = Field(alias="productId")
+    kind: Literal["view", "click", "skip", "wishlist", "purchase", "return"]
+    occurred_at: datetime = Field(alias="occurredAt")
+    reason: str | None = None
+
+
+class SignalIngestionResponse(BaseModel):
+    signal: CustomerSignal
+    derived_memories: list[MemoryFact] = Field(alias="derivedMemories")

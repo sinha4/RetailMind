@@ -1,5 +1,4 @@
 import json
-from functools import lru_cache
 from pathlib import Path
 
 from retailmind_api.models import Product
@@ -7,9 +6,8 @@ from retailmind_api.models import Product
 CATALOG_PATH = Path(__file__).parent / "data" / "catalog.json"
 
 
-@lru_cache
 def get_catalog() -> tuple[Product, ...]:
-    """Load the bundled demo catalog once and validate every product."""
+    """Load and validate the demo catalog so local product edits appear immediately."""
     with CATALOG_PATH.open(encoding="utf-8") as catalog_file:
         records = json.load(catalog_file)
 

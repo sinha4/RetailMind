@@ -22,6 +22,10 @@ experience is the remaining Phase 2 task.
 - Convert events into positive/negative memory facts.
 - Demonstrate a later recommendation changing because of a previous return.
 
+In progress: event ingestion, event audit history, and explicit memory derivation are implemented.
+The customer experience currently exposes wishlist and skip signals; purchase and return flows can
+use the same API.
+
 ## Phase 4 — Orchestration depth
 
 - Add inventory alternatives and low-stock messaging.

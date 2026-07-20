@@ -47,3 +47,20 @@ export interface ConversationMessageResponse {
   recommendations: ProductRecommendation[];
   trace: AgentTraceStep[];
 }
+
+export type SignalKind =
+  | "view"
+  | "click"
+  | "skip"
+  | "wishlist"
+  | "purchase"
+  | "return";
+
+export interface CustomerSignal {
+  id: string;
+  customerId: string;
+  productId: string;
+  kind: SignalKind;
+  occurredAt: string;
+  reason?: string;
+}
