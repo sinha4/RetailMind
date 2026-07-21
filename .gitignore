@@ -25,5 +25,7 @@ qdrant_storage/
 dist/
 build/
 coverage/
+.coverage
+coverage.xml
 *.log
-
+tmp/

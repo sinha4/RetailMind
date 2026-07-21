@@ -12,7 +12,9 @@ flowchart LR
   Orchestrator --> Personalization[Personalization agent]
   Orchestrator --> Inventory[Inventory agent]
   Orchestrator --> Retention[Post-purchase agent]
+  Intent --> Gemini[Gemini structured intent]
   Intent --> Brand[Brand voice gate]
+  Brand --> Lyzr[Lyzr deployed agent]
   Customer <--> Qdrant[(Qdrant memory)]
   Personalization <--> Qdrant
   Personalization --> Brand
@@ -26,7 +28,7 @@ flowchart LR
 - **Web app:** customer chat/discovery experience, recommendation cards, explanations, and later a brand-manager view.
 - **API:** stable HTTP boundary, request validation, orchestration, observability, and human escalation.
 - **Domain layer:** provider-neutral customer signals, memory facts, intents, products, recommendations, and agent results.
-- **Adapters:** Google ADK, Lyzr, Qdrant, catalog, inventory, and order providers. Business logic must not import provider SDKs directly.
+- **Adapters:** Gemini HTTP, Lyzr Agent API v3, Qdrant, catalog, inventory, and order providers. Business logic imports provider-neutral protocols rather than provider SDKs.
 - **Brand voice gate:** the final customer-facing generation step. Internal facts and rankings remain structured so rewriting cannot alter price, stock, or policy claims.
 
 ## Initial API surface
@@ -34,7 +36,8 @@ flowchart LR
 | Method | Path                                  | Purpose                                 |
 | ------ | ------------------------------------- | --------------------------------------- |
 | GET    | `/health`                             | Liveness and service identity           |
-| GET    | `/ready`                              | Dependency readiness (expanded later)   |
+| GET    | `/ready`                              | Catalog and memory dependency readiness |
+| GET    | `/metrics`                            | Request, error, and latency metrics     |
 | GET    | `/v1/products`                        | List and filter catalog products        |
 | GET    | `/v1/products/{product_id}`           | Retrieve authoritative product details  |
 | GET    | `/v1/customers/{customer_id}/context` | Retrieve profile and memory facts       |
@@ -43,6 +46,7 @@ flowchart LR
 | GET    | `/v1/customers/{customer_id}/events`  | Retrieve the customer event audit trail |
 | GET    | `/v1/brands`                          | List brand-manager voice profiles       |
 | POST   | `/v1/orders/delivery-delay`           | Run delay communication and escalation  |
+| POST   | `/v1/demo/reset`                      | Restore repeatable demo memory/events   |
 
 ## Key implementation decisions
 
@@ -51,3 +55,4 @@ flowchart LR
 3. Require recommendation agents to return structured product IDs, scores, and reasons before brand rewriting.
 4. Keep catalog truth, inventory, prices, and policies outside the language model.
 5. Add tracing at the orchestrator boundary so every recommendation is explainable during the demo.
+6. Use Gemini for structured intent and Lyzr for brand presentation, while keeping both optional and independently replaceable.

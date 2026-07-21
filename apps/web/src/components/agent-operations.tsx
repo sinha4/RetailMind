@@ -28,7 +28,8 @@ export function AgentOperations({ voice }: AgentOperationsProps) {
           brandVoice: voice,
         }),
       });
-      if (response.ok) setResult((await response.json()) as DeliveryDelayResponse);
+      if (response.ok)
+        setResult((await response.json()) as DeliveryDelayResponse);
     } finally {
       setIsLoading(false);
     }
@@ -40,9 +41,12 @@ export function AgentOperations({ voice }: AgentOperationsProps) {
         <p className="eyebrow">Agent operations demo</p>
         <div className="mt-4 grid gap-6 lg:grid-cols-[0.75fr_1.25fr]">
           <div className="rounded-3xl bg-[var(--soft)] p-6">
-            <h2 className="text-2xl font-semibold tracking-[-0.03em]">Simulate a delivery delay</h2>
+            <h2 className="text-2xl font-semibold tracking-[-0.03em]">
+              Simulate a delivery delay
+            </h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Tests post-purchase communication, brand voice, and human escalation together.
+              Tests post-purchase communication, brand voice, and human
+              escalation together.
             </p>
             <label className="mt-5 block text-xs font-semibold uppercase tracking-[0.12em]">
               Delay: {delayDays} days
@@ -69,12 +73,18 @@ export function AgentOperations({ voice }: AgentOperationsProps) {
               <>
                 <p className="text-lg font-semibold">{result.message}</p>
                 <p className="mt-3 text-sm text-[var(--muted)]">
-                  Human escalation: {result.escalation.required ? "Required" : "Not required"} — {result.escalation.reason}
+                  Human escalation:{" "}
+                  {result.escalation.required ? "Required" : "Not required"} —{" "}
+                  {result.escalation.reason}
                 </p>
-                <div className="mt-5"><AgentTrace trace={result.trace} /></div>
+                <div className="mt-5">
+                  <AgentTrace trace={result.trace} />
+                </div>
               </>
             ) : (
-              <p className="text-sm text-[var(--muted)]">The coordinated agent result will appear here.</p>
+              <p className="text-sm text-[var(--muted)]">
+                The coordinated agent result will appear here.
+              </p>
             )}
           </div>
         </div>

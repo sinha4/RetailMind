@@ -1,3 +1,5 @@
+"""Versioned catalog loading and authoritative product filtering."""
+
 import json
 from pathlib import Path
 
@@ -30,9 +32,7 @@ def filter_catalog(
             return False
         if material and material.casefold() not in {item.casefold() for item in product.materials}:
             return False
-        if occasion and occasion.casefold() not in {
-            item.casefold() for item in product.occasions
-        }:
+        if occasion and occasion.casefold() not in {item.casefold() for item in product.occasions}:
             return False
         if max_price is not None and product.price > max_price:
             return False

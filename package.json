@@ -13,13 +13,18 @@
     "check": "npm run typecheck --workspace @retailmind/web && npm run lint --workspace @retailmind/web",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "test:api": "python -m pytest apps/api/tests"
+    "test": "npm run test:api && npm run test:web",
+    "test:api": "sh scripts/test-api.sh",
+    "test:web": "npm run test --workspace @retailmind/web",
+    "verify": "npm run format && npm run check && npm test && npm run build"
   },
   "devDependencies": {
     "prettier": "3.6.2"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
   },
   "engines": {
     "node": ">=22"
   }
 }
-

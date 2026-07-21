@@ -1,3 +1,5 @@
+"""Validated API and domain contracts shared across RetailMind agents."""
+
 from datetime import datetime
 from typing import Literal
 

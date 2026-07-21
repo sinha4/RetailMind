@@ -1,3 +1,5 @@
+"""Customer event ingestion and attributable memory derivation."""
+
 from datetime import UTC, datetime
 from functools import lru_cache
 from uuid import uuid4

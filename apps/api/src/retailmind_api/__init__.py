@@ -1,2 +1,1 @@
 """RetailMind API package."""
-

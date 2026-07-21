@@ -1,9 +1,17 @@
+"""Shopping intent extraction, grounded ranking, and orchestrated presentation."""
+
 import re
 from dataclasses import dataclass
 from uuid import uuid4
 
 from retailmind_api.agents import evaluate_escalation
-from retailmind_api.ai import GeminiAdapter, ModelAdapter, ModelOutput, parse_json_output
+from retailmind_api.ai import (
+    GeminiAdapter,
+    LyzrAdapter,
+    ModelAdapter,
+    ModelOutput,
+    parse_json_output,
+)
 from retailmind_api.catalog import get_catalog
 from retailmind_api.config import get_settings
 from retailmind_api.memory import get_customer_context
@@ -214,12 +222,12 @@ async def _ai_intent(message: str, adapter: ModelAdapter) -> tuple[ShoppingInten
     schema = {
         "type": "object",
         "properties": {
-            "occasion": {"type": ["string", "null"]},
+            "occasion": {"type": "string", "nullable": True},
             "categories": {"type": "array", "items": {"type": "string"}},
             "materials": {"type": "array", "items": {"type": "string"}},
             "colors": {"type": "array", "items": {"type": "string"}},
-            "maxPrice": {"type": ["integer", "null"]},
-            "size": {"type": ["string", "null"]},
+            "maxPrice": {"type": "integer", "nullable": True},
+            "size": {"type": "string", "nullable": True},
         },
         "required": ["occasion", "categories", "materials", "colors", "maxPrice", "size"],
     }
@@ -252,16 +260,21 @@ async def handle_shopping_turn(
     request: ConversationMessageRequest, adapter: ModelAdapter | None = None
 ) -> ConversationMessageResponse:
     settings = get_settings()
-    configured_adapter = adapter
-    if configured_adapter is None and (settings.gemini_api_key or settings.google_api_key):
-        configured_adapter = GeminiAdapter(settings)
+    intent_adapter = adapter
+    brand_adapter = adapter
+    if adapter is None:
+        if settings.gemini_api_key or settings.google_api_key:
+            intent_adapter = GeminiAdapter(settings)
+            brand_adapter = intent_adapter
+        if settings.lyzr_api_key and settings.lyzr_agent_id:
+            brand_adapter = LyzrAdapter(settings)
 
     intent_output: ModelOutput | None = None
     intent_error: str | None = None
     intent = extract_intent(request.message)
-    if configured_adapter:
+    if intent_adapter:
         try:
-            intent, intent_output = await _ai_intent(request.message, configured_adapter)
+            intent, intent_output = await _ai_intent(request.message, intent_adapter)
         except Exception as error:
             intent_error = type(error).__name__
             intent = extract_intent(request.message)
@@ -272,13 +285,13 @@ async def handle_shopping_turn(
     brand_message = fallback_message
     brand_output: ModelOutput | None = None
     brand_error: str | None = None
-    if configured_adapter:
+    if brand_adapter:
         try:
             brand_message, brand_output = await _ai_brand_message(
                 fallback_message,
                 context.profile.display_name,
                 request.brand_voice,
-                configured_adapter,
+                brand_adapter,
             )
         except Exception as error:
             brand_error = type(error).__name__

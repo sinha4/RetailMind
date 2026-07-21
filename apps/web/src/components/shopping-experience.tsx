@@ -251,30 +251,30 @@ export function ShoppingExperience({
                 ))}
               </div>
               <div className="flex shrink-0 items-center gap-3">
-              <button
-                className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)] disabled:opacity-50"
-                disabled={isResetting || isLoading}
-                onClick={resetDemo}
-                type="button"
-              >
-                {isResetting ? "Resetting…" : "Reset demo"}
-              </button>
-              <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                Voice
-                <select
-                  className="rounded-full border border-black/10 bg-white px-3 py-1.5 font-semibold text-[var(--ink)] outline-none focus:border-[var(--accent)]"
-                  onChange={(event) =>
-                    setVoice(
-                      event.target.value as "warm" | "minimal" | "bold",
-                    )
-                  }
-                  value={voice}
+                <button
+                  className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)] disabled:opacity-50"
+                  disabled={isResetting || isLoading}
+                  onClick={resetDemo}
+                  type="button"
                 >
-                  <option value="warm">Warm</option>
-                  <option value="minimal">Minimal</option>
-                  <option value="bold">Bold</option>
-                </select>
-              </label>
+                  {isResetting ? "Resetting…" : "Reset demo"}
+                </button>
+                <label className="flex items-center gap-2 text-xs text-[var(--muted)]">
+                  Voice
+                  <select
+                    className="rounded-full border border-black/10 bg-white px-3 py-1.5 font-semibold text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+                    onChange={(event) =>
+                      setVoice(
+                        event.target.value as "warm" | "minimal" | "bold",
+                      )
+                    }
+                    value={voice}
+                  >
+                    <option value="warm">Warm</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="bold">Bold</option>
+                  </select>
+                </label>
               </div>
             </div>
           </form>
@@ -353,8 +353,16 @@ export function ShoppingExperience({
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   ["Products considered", "30"],
-                  ["Memory facts used", result.trace.find((step) => step.agent === "customer-intelligence")?.summary.match(/\d+/)?.[0] ?? "0"],
-                  ["Top confidence", `${Math.round(result.escalation.confidence * 100)}%`],
+                  [
+                    "Memory facts used",
+                    result.trace
+                      .find((step) => step.agent === "customer-intelligence")
+                      ?.summary.match(/\d+/)?.[0] ?? "0",
+                  ],
+                  [
+                    "Top confidence",
+                    `${Math.round(result.escalation.confidence * 100)}%`,
+                  ],
                   ["Agents executed", String(result.trace.length)],
                 ].map(([label, value]) => (
                   <div className="rounded-2xl bg-white/70 p-4" key={label}>

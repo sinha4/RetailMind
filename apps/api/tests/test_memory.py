@@ -14,9 +14,7 @@ def test_demo_customer_context_contains_profile_and_attributable_memory() -> Non
     assert context["profile"]["sizes"]["dress"] == "M"
     assert len(context["memories"]) == 5
 
-    polyester_fact = next(
-        fact for fact in context["memories"] if fact["value"] == "polyester"
-    )
+    polyester_fact = next(fact for fact in context["memories"] if fact["value"] == "polyester")
     assert polyester_fact["sentiment"] == "negative"
     assert polyester_fact["source"] == "return"
     assert polyester_fact["confidence"] == 0.98

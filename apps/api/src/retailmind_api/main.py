@@ -1,3 +1,5 @@
+"""FastAPI boundary, health checks, metrics, and orchestration routes."""
+
 import json
 import logging
 from time import perf_counter
@@ -5,6 +7,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 
 from retailmind_api.agents import BRAND_PROFILES, handle_delivery_delay
 from retailmind_api.catalog import filter_catalog, get_catalog
@@ -38,6 +41,7 @@ from retailmind_api.recommendations import handle_shopping_turn
 settings = get_settings()
 logger = logging.getLogger("retailmind.api")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
+request_metrics = {"requests": 0, "errors": 0, "latency_ms": 0}
 
 app = FastAPI(
     title="RetailMind API",
@@ -69,6 +73,10 @@ async def request_observability(request: Request, call_next):
         )
         raise
     response.headers["x-request-id"] = request_id
+    latency_ms = round((perf_counter() - started) * 1000)
+    request_metrics["requests"] += 1
+    request_metrics["errors"] += int(response.status_code >= 500)
+    request_metrics["latency_ms"] += latency_ms
     logger.info(
         json.dumps(
             {
@@ -77,7 +85,7 @@ async def request_observability(request: Request, call_next):
                 "method": request.method,
                 "path": request.url.path,
                 "status": response.status_code,
-                "latencyMs": round((perf_counter() - started) * 1000),
+                "latencyMs": latency_ms,
             }
         )
     )
@@ -91,8 +99,37 @@ async def health() -> dict[str, str]:
 
 @app.get("/ready", tags=["system"])
 async def ready() -> dict[str, str]:
-    # Dependency checks will be added as provider adapters are implemented.
-    return {"status": "ready"}
+    try:
+        catalog_count = len(get_catalog())
+        memory_count = len(get_customer_context("demo-customer").memories)
+    except Exception as error:
+        raise HTTPException(status_code=503, detail="Dependency readiness check failed") from error
+    return {
+        "status": "ready",
+        "catalog": f"{catalog_count} products",
+        "memory": f"{memory_count} facts",
+    }
+
+
+@app.get("/metrics", response_class=PlainTextResponse, tags=["system"])
+async def metrics() -> str:
+    """Expose low-cardinality Prometheus metrics for local and hosted monitoring."""
+    requests = request_metrics["requests"]
+    average_latency = request_metrics["latency_ms"] / requests if requests else 0
+    return "\n".join(
+        [
+            "# HELP retailmind_http_requests_total Completed HTTP requests.",
+            "# TYPE retailmind_http_requests_total counter",
+            f"retailmind_http_requests_total {requests}",
+            "# HELP retailmind_http_errors_total Completed HTTP 5xx responses.",
+            "# TYPE retailmind_http_errors_total counter",
+            f"retailmind_http_errors_total {request_metrics['errors']}",
+            "# HELP retailmind_http_latency_ms Average HTTP latency in milliseconds.",
+            "# TYPE retailmind_http_latency_ms gauge",
+            f"retailmind_http_latency_ms {average_latency:.2f}",
+            "",
+        ]
+    )
 
 
 @app.get("/v1/products", response_model=ProductList, tags=["catalog"])

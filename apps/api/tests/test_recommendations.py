@@ -4,6 +4,7 @@ import json
 from fastapi.testclient import TestClient
 
 from retailmind_api.ai import ModelOutput
+from retailmind_api.config import Settings
 from retailmind_api.main import app
 from retailmind_api.models import ConversationMessageRequest
 from retailmind_api.recommendations import extract_intent, handle_shopping_turn
@@ -96,6 +97,37 @@ class FailingGeminiAdapter:
         raise TimeoutError("provider unavailable")
 
 
+class IntentProviderAdapter:
+    async def generate(self, prompt: str, *, response_schema: dict | None = None) -> ModelOutput:
+        assert response_schema is not None
+        return ModelOutput(
+            text=json.dumps(
+                {
+                    "occasion": "beach",
+                    "categories": ["dress"],
+                    "materials": ["linen"],
+                    "colors": ["blue"],
+                    "maxPrice": 5000,
+                    "size": "M",
+                }
+            ),
+            latency_ms=12,
+            provider="google-gemini",
+            model="gemini-test",
+        )
+
+
+class BrandProviderAdapter:
+    async def generate(self, prompt: str, *, response_schema: dict | None = None) -> ModelOutput:
+        assert response_schema is None
+        return ModelOutput(
+            text="Maya, your considered coastal edit is ready.",
+            latency_ms=18,
+            provider="lyzr-agent",
+            model="lyzr-test-agent",
+        )
+
+
 def test_ai_intent_and_brand_output_are_validated_and_traced() -> None:
     response = asyncio.run(
         handle_shopping_turn(
@@ -131,6 +163,35 @@ def test_ai_failure_is_visible_and_uses_deterministic_fallback() -> None:
     assert response.trace[0].provider == "fallback"
     assert "TimeoutError" in response.trace[0].summary
     assert response.trace[-2].provider == "fallback"
+
+
+def test_orchestrator_uses_gemini_for_intent_and_lyzr_for_brand(monkeypatch) -> None:
+    import retailmind_api.recommendations as orchestration
+
+    monkeypatch.setattr(
+        orchestration,
+        "get_settings",
+        lambda: Settings(
+            gemini_api_key="gemini-test-key",
+            lyzr_api_key="lyzr-test-key",
+            lyzr_agent_id="lyzr-test-agent",
+        ),
+    )
+    monkeypatch.setattr(orchestration, "GeminiAdapter", lambda settings: IntentProviderAdapter())
+    monkeypatch.setattr(orchestration, "LyzrAdapter", lambda settings: BrandProviderAdapter())
+
+    response = asyncio.run(
+        handle_shopping_turn(
+            ConversationMessageRequest(
+                customerId="demo-customer",
+                message="Find a blue linen beach dress under 5000 in size M",
+            )
+        )
+    )
+
+    assert response.trace[0].provider == "google-gemini"
+    assert response.trace[-2].provider == "lyzr-agent"
+    assert response.assistant_message == "Maya, your considered coastal edit is ready."
 
 
 def test_demo_reset_restores_seed_memory_and_clears_events() -> None:

@@ -8,5 +8,9 @@ Agent-level observability is returned in the response trace. Each step records i
 latency when available, prompt version when applicable, and a safe fallback reason. This makes the
 demo usable without an external model while keeping provider failures visible.
 
+`GET /ready` verifies that catalog data and demo memory are readable. `GET /metrics` exposes
+Prometheus-compatible completed-request, 5xx-error, and average-latency signals. Docker healthchecks
+use readiness so dependent services start only after the API can serve its data.
+
 Production deployments should forward the JSON stream to their log platform and alert on elevated
 5xx rates, latency, repeated provider fallbacks, and human-escalation volume.

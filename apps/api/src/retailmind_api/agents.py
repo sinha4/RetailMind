@@ -1,3 +1,5 @@
+"""Deterministic post-purchase, escalation, and brand-profile agents."""
+
 from datetime import UTC, datetime, timedelta
 
 from retailmind_api.catalog import get_catalog
