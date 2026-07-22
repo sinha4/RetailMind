@@ -153,7 +153,7 @@ builds both production containers on every push to `main` and every pull request
 | Container builds                 | API and web Dockerfiles built independently in CI     |
 | Security automation              | CodeQL, Dependabot, npm high-severity gate, pip audit |
 
-See [testing](docs/testing.md), [operations](docs/operations.md),
+See [testing](docs/testing.md), [coding standards](docs/coding-standards.md), [operations](docs/operations.md),
 [database migrations](docs/database-migrations.md), [security](SECURITY.md), and
 [contributing](CONTRIBUTING.md) for the evidence behind these claims.
 

@@ -11,6 +11,7 @@
     "dev:web": "npm run dev --workspace @retailmind/web",
     "build": "npm run build --workspace @retailmind/web",
     "check": "npm run typecheck --workspace @retailmind/web && npm run lint --workspace @retailmind/web",
+    "lint:commit": "commitlint --last --verbose",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "npm run test:api && npm run test:web",
@@ -19,6 +20,8 @@
     "verify": "npm run format && npm run check && npm test && npm run build"
   },
   "devDependencies": {
+    "@commitlint/cli": "20.2.0",
+    "@commitlint/config-conventional": "20.2.0",
     "prettier": "3.6.2"
   },
   "overrides": {
