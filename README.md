@@ -18,7 +18,8 @@ fails, the same journey completes through a visible validated fallback.
 
 ## Why it stands out
 
-- **Persistent customer intelligence:** explicit, attributable memory facts stored in Qdrant.
+- **Persistent customer intelligence:** explicit, attributable memory facts stored in Qdrant with
+  versioned, idempotent schema migrations.
 - **Negative-signal learning:** return reasons create product and material avoidances that affect the
   next ranking.
 - **Grounded recommendations:** every result is in stock, within constraints, scored, and explained.
@@ -30,8 +31,8 @@ fails, the same journey completes through a visible validated fallback.
   versions, latency metadata, and deterministic fallbacks.
 - **Operational demo:** delivery delays trigger proactive communication and threshold-based human
   escalation.
-- **Engineering quality:** 25 backend tests at 88% coverage, frontend component tests at 100% line
-  coverage, CI, CodeQL, Dependabot, structured logs, typed contracts, and production builds.
+- **Engineering quality:** 26 backend tests at 88% coverage, eight frontend tests at 100% line
+  coverage, CI container builds, CodeQL, Dependabot, structured logs, and typed contracts.
 
 ## Architecture
 
@@ -112,6 +113,8 @@ Open [http://localhost:3000](http://localhost:3000). Interactive API documentati
 
 By default, local development uses embedded Qdrant in the ignored `qdrant_storage/` directory. For
 a Qdrant server, run `docker compose up -d qdrant` and set `QDRANT_URL=http://localhost:6333`.
+Schema migrations run automatically before seeding; see the
+[Qdrant migration runbook](docs/database-migrations.md) for versions and manual operation.
 
 For a reproducible containerized stack, run `docker compose up --build`; Qdrant, the API, and the
 web app start with health-ordered dependencies on ports 6333, 8000, and 3000.
@@ -135,20 +138,23 @@ npm run verify
 ```
 
 This runs formatting, TypeScript, ESLint, backend and frontend tests with coverage thresholds, and a
-production Next.js build. CI additionally runs dependency audits and uploads coverage artifacts.
+production Next.js build. CI additionally runs dependency audits, uploads coverage artifacts, and
+builds both production containers on every push to `main` and every pull request.
 
 | Quality signal                   | Current result                                        |
 | -------------------------------- | ----------------------------------------------------- |
-| Backend tests                    | 25 passing                                            |
-| Backend coverage                 | 88% across 648 statements; minimum 85%                |
-| Frontend component tests         | 4 passing                                             |
+| Backend tests                    | 26 passing                                            |
+| Backend coverage                 | 88% across 701 statements; minimum 85%                |
+| Frontend component/proxy tests   | 8 passing                                             |
 | Selected component line coverage | 100%; branch minimum 80%                              |
 | TypeScript and ESLint            | Passing                                               |
 | Python Ruff                      | Passing                                               |
 | Production web build             | Passing                                               |
+| Container builds                 | API and web Dockerfiles built independently in CI     |
 | Security automation              | CodeQL, Dependabot, npm high-severity gate, pip audit |
 
-See [testing](docs/testing.md), [operations](docs/operations.md), [security](SECURITY.md), and
+See [testing](docs/testing.md), [operations](docs/operations.md),
+[database migrations](docs/database-migrations.md), [security](SECURITY.md), and
 [contributing](CONTRIBUTING.md) for the evidence behind these claims.
 
 ## API surface

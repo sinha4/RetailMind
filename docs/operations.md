@@ -14,3 +14,11 @@ use readiness so dependent services start only after the API can serve its data.
 
 Production deployments should forward the JSON stream to their log platform and alert on elevated
 5xx rates, latency, repeated provider fallbacks, and human-escalation volume.
+
+The Next.js API boundary preserves upstream status codes and request IDs. It distinguishes malformed
+client JSON (`400`), an unavailable API (`503`), provider timeouts (`504`), and invalid upstream JSON
+(`502`), allowing dashboards and users to identify the failing layer without exposing internals.
+
+Qdrant migrations execute before customer-memory seeding. Operators can inspect or advance the
+schema with `scripts/migrate-memory.py`; version history and recovery guidance are documented in the
+[migration runbook](database-migrations.md).

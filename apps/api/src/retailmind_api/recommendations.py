@@ -102,6 +102,10 @@ def _contains(values: list[str], preference: str) -> bool:
 def _score_product(
     product: Product, intent: ShoppingIntent, context: CustomerContext
 ) -> ScoredProduct | None:
+    """Apply hard safety filters first, then rank only eligible catalog products."""
+    # Stock, explicit constraints, learned avoidances, and size availability are hard gates.
+    # Keeping them outside the weighted score prevents an LLM or a strong preference match from
+    # promoting an item the retailer cannot responsibly offer.
     if product.total_stock <= 0:
         return None
     if intent.categories and product.category not in intent.categories:
@@ -140,6 +144,8 @@ def _score_product(
     if preferred_size and product.inventory.get(preferred_size, 0) <= 0:
         return None
 
+    # The score is an explainable ranking aid, not a probability. Each increment has matching
+    # evidence so the storefront can show why an item moved up or down.
     score = 15
     evidence = [f"₹{product.price:,} is within the ₹{max_price:,} budget."]
 
@@ -262,6 +268,8 @@ async def handle_shopping_turn(
     settings = get_settings()
     intent_adapter = adapter
     brand_adapter = adapter
+    # A supplied adapter is a test seam. In production, Gemini owns typed intent while Lyzr may
+    # independently own brand presentation; neither provider can alter catalog facts or ranking.
     if adapter is None:
         if settings.gemini_api_key or settings.google_api_key:
             intent_adapter = GeminiAdapter(settings)
@@ -272,6 +280,8 @@ async def handle_shopping_turn(
     intent_output: ModelOutput | None = None
     intent_error: str | None = None
     intent = extract_intent(request.message)
+    # Provider failures deliberately degrade to the deterministic parser and remain visible in
+    # the trace instead of turning an optional AI dependency into an application outage.
     if intent_adapter:
         try:
             intent, intent_output = await _ai_intent(request.message, intent_adapter)

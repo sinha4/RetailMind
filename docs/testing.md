@@ -18,9 +18,13 @@ The API tests cover health and readiness, catalog filters, seeded and persistent
 event-to-memory derivation, grounded recommendations, AI adapter validation, deterministic fallback,
 post-purchase messaging, delivery-delay escalation, brand profiles, Prometheus metrics, request IDs,
 and demo reset. Lyzr tests verify authenticated v3 chat payloads, deployed Agent IDs, response
-parsing, provider routing, and separation from structured intent. The suite contains 25 backend tests at 88% coverage
-and four frontend component tests at 100% statement, branch, function, and line coverage for the
-traced demo views.
+parsing, provider routing, and separation from structured intent. Qdrant migration tests verify
+version tracking, payload backfills, and repeat execution. The suite contains 26 backend tests at
+88% coverage and eight frontend tests at 100% statement and line coverage for the traced demo views
+and API proxy failure boundary.
+
+CI repeats these checks on pushes to `main` and pull requests, audits JavaScript and Python
+dependencies, and builds the API and web production containers independently.
 
 ## Manual demo journey
 

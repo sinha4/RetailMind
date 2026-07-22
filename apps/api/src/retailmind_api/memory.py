@@ -7,6 +7,7 @@ from typing import Protocol
 from uuid import NAMESPACE_URL, uuid5
 
 from retailmind_api.config import Settings, get_settings
+from retailmind_api.migrations import SCHEMA_VERSION, QdrantMigrationRunner
 from retailmind_api.models import CustomerContext, CustomerProfile, MemoryFact
 
 CUSTOMERS_PATH = Path(__file__).parent / "data" / "customers.json"
@@ -57,7 +58,7 @@ class SeededMemoryRepository:
 
 
 class QdrantMemoryRepository:
-    """Qdrant payload store for attributable facts; semantic vectors come later."""
+    """Versioned Qdrant payload store for explicit, attributable memory facts."""
 
     def __init__(self, settings: Settings) -> None:
         try:
@@ -82,6 +83,11 @@ class QdrantMemoryRepository:
                 collection_name=self._collection,
                 vectors_config=models.VectorParams(size=1, distance=models.Distance.COSINE),
             )
+        # Migrations run before seeding so existing deployments are upgraded in place and new
+        # deployments receive the same indexed, versioned payload schema.
+        self.schema_version = QdrantMigrationRunner(
+            self._client, self._models, self._collection
+        ).run()
         self._seed_if_empty()
 
     def _seed_if_empty(self) -> None:
@@ -107,13 +113,17 @@ class QdrantMemoryRepository:
         return [MemoryFact.model_validate(point.payload) for point in points]
 
     def upsert_fact(self, fact: MemoryFact) -> None:
+        # Deterministic IDs make retries idempotent: the same fact replaces itself instead of
+        # creating duplicate customer memories after network or workflow retries.
+        payload = fact.model_dump(mode="json", by_alias=True)
+        payload.update(recordType="memory_fact", schemaVersion=SCHEMA_VERSION)
         self._client.upsert(
             collection_name=self._collection,
             points=[
                 self._models.PointStruct(
                     id=str(uuid5(NAMESPACE_URL, fact.id)),
                     vector=[1.0],
-                    payload=fact.model_dump(mode="json", by_alias=True),
+                    payload=payload,
                 )
             ],
         )

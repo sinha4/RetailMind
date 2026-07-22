@@ -49,6 +49,8 @@ class GeminiAdapter:
 
         started = perf_counter()
         async with httpx.AsyncClient(timeout=self._timeout) as client:
+            # Retry only throttling and transient provider failures. Authentication, validation,
+            # and other permanent errors fail immediately so orchestration can use its fallback.
             for attempt in range(3):
                 response = await client.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/{self._model}:generateContent",

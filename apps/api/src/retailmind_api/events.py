@@ -56,6 +56,7 @@ def _product_fact(
 
 
 def _derive_memories(signal: CustomerSignal, product: Product) -> list[MemoryFact]:
+    """Convert auditable behavior into confidence-weighted facts used by later rankings."""
     if signal.kind == "wishlist":
         return [_product_fact(signal, "positive", 0.7, f"Saved {product.name} to the wishlist.")]
     if signal.kind == "purchase":
@@ -65,6 +66,8 @@ def _derive_memories(signal: CustomerSignal, product: Product) -> list[MemoryFac
     if signal.kind == "return":
         reason = signal.reason or "No return reason was provided."
         facts = [_product_fact(signal, "negative", 0.98, f"Returned {product.name}: {reason}")]
+        # Material avoidance is inferred only from an explicit material-related return reason.
+        # This narrow rule avoids turning an unrelated return into a broad customer preference.
         if signal.reason and any(
             term in signal.reason.casefold() for term in ("fabric", "material", "itch", "hot")
         ):

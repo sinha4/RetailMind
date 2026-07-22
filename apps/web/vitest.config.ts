@@ -11,6 +11,7 @@ export default defineConfig({
       include: [
         "src/components/agent-trace.tsx",
         "src/components/recommendation-comparison.tsx",
+        "src/lib/api-proxy.ts",
       ],
       thresholds: { lines: 90, functions: 90, statements: 90, branches: 80 },
     },
